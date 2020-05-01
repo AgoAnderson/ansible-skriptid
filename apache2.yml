@@ -1,0 +1,40 @@
+---
+- hosts: webservers
+  gather_facts: false
+  run_once: true
+  tasks:
+    - name: install apache2
+      apt: name=apache2 update_cache=yes state=latest
+
+    - name: Loome public_html kataloogi ago kaustajale
+      file:
+        path=/home/ago/public.html
+        owner=ago
+        group=ago
+        mode=0755
+        state=directory
+
+    - name: Lubame agodir mod
+      apache2_module: name=agodir state=present
+      
+    - name: Kopeerime index.html faili rshaansible
+      fetch: src=/var/www/html/index.html dest=./index.html flat=yes
+
+    - name: Kopeerime ago kasutajale index.html faili
+      copy:
+        src: ./index.html
+        dest: /home/ago/public_html/
+        owner: ago
+        group: ago
+        mode: '0644'
+
+    - name: user kasutja index.html faili redigeerimine
+      lineinfile: dest=/home/ago/public_html/index.html regexp="Apache2 Debian Default Page" line="USER1 lehekylg" state=present
+
+    - name: Apache2 alglaadimine
+      service:
+        name: apache2
+        state: restarted
+      tags:
+        - always
+
