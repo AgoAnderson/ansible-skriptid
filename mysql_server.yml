@@ -1,0 +1,45 @@
+---
+- hosts: webservers
+  tasks:
+  - name: allalaadimi  kataloog loomine
+    file:
+     path=/root/allalaadimised
+     owner=root
+     group=root
+     mode=0755
+     state=directory
+
+  - name: allalaadimine mysql_5.7 repositooriumi pakett apt-i lisamiseks
+    get_url:
+      url: http://repo.mysql.com/mysql-apt-config_0.8.6-1_all.deb
+      dest: "/root/allalaadimised"
+      mode: 0440
+
+  - name: mysql_5.7 repositooriumi installimine
+    apt: "deb=/root/allalaadimised/mysql-apt-config_0.8.6-1_all.deb"
+
+  - name: mysql_5.7 installimine
+    apt: name=mysql-server state=present
+
+  - name: python-mysqldb installimine
+    apt: name=python-mysqldb state=latest
+
+  - name: Loome kasutaja 'root' ja temale parooli 'qwerty' koos koikidega privilegedega
+    mysql_user:
+      name: root
+      password: qwerty
+      priv: '*.*:ALL,GRANT'
+      state: present
+
+  - name: Loome root kasutaja login faili
+    copy:
+      dest: /root/.my.cnf
+      owner: root
+      group: root
+      mode: 0600
+      content: |
+           [client]
+           user=root
+           password=qwerty
+  - name: mysqli alglaadimine
+    service: name=mysql state=restarted
